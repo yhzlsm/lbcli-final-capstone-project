@@ -149,14 +149,32 @@ jobs:
           fi
 
           # Verify transaction-1.txt (funding tx)
-          TXID=$(cat submission/transaction-1.txt)
-          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TXID &> /dev/null; then
-            echo "✅ Funding transaction exists: $TXID"
+          if [[ ! -s submission/transaction-1.txt ]]; then
+              echo "❌ Error: transaction-1.txt is empty or missing."
+              exit 1
+          fi
+          TX1=$(cat submission/transaction-1.txt)
+          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TX1 &> /dev/null; then
+            echo "✅ Funding transaction exists: $TX1"
           else
-            echo "❌ Funding transaction not found: $TXID"
+            echo "❌ Funding transaction not found: $TX1"
             exit 1
           fi
 
+
+          # Verify block-1.txt
+          if [[ ! -s submission/block-1.txt ]]; then
+              echo "❌ Error: block-1.txt is empty or missing."
+              exit 1
+          fi
+          BLOCK1=$(cat submission/block-1.txt | tr -d '\n')
+          TXS1=$(bitcoin-cli -signet getblock $BLOCK1 | jq -r '.tx[]')
+          if echo "$TXS1" | grep -xq "$TX1"; then
+              echo "✅ transaction-1 is included in block-1."
+          else
+              echo "❌ transaction-1 not found in block-1."
+              exit 1
+          fi
 
           # Verify block-1.txt and coinbase-1.txt
           BLOCK=$(cat submission/block-1.txt)
