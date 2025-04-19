@@ -16,7 +16,15 @@ jobs:
       - name: Setup, Get Block & Verify Submissions
         run: |
           # Setup Bitcoin Core
-          sudo bash .github/setup.sh
+          wget https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz
+          tar -xzvf bitcoin-28.0-x86_64-linux-gnu.tar.gz
+          sudo ln -s $PWD/bitcoin-28.0/bin/* /usr/local/bin/
+
+          mkdir -p ~/.bitcoin
+          echo "signet=1" >> ~/.bitcoin/bitcoin.conf
+          echo "rpcconnect=165.22.121.70" >> ~/.bitcoin/bitcoin.conf
+          echo "rpcuser=btrustbuildersrpc" >> ~/.bitcoin/bitcoin.conf
+          echo "rpcpassword=btrustbuilderspass" >> ~/.bitcoin/bitcoin.conf
 
           # Verify block is accessible
           echo "Fetching block chain info..."
