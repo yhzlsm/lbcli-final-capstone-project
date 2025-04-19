@@ -37,7 +37,8 @@ jobs:
           # Run and verify 01.sh
           chmod +x submission/01.sh
           HASH=$(submission/01.sh)
-          if [[ "$HASH" == "000000b024f11595795f0be5974229f786df389c8b92e92b61890e9e3c6b8d8a" ]]; then
+          EXPECTED=000000b024f11595795f0be5974229f786df389c8b92e92b61890e9e3c6b8d8a
+          if [[ "$HASH" == "$EXPECTED" ]]; then
             echo "✅ Success: Verify Hash Block passed!"
           else
             echo "❌ Error: Verify Hash Block failed!"
