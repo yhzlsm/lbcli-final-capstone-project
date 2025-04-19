@@ -34,7 +34,7 @@ You can also check out [Bitcoin Core RPC API Reference docs](https://developer.b
 <img src="https://github.com/btrust-builders/lbcli-final-capstone-project/blob/main/enable-github-actions.png" width="500" />
 
 3. Clone your fork to your local computer.
-4. Add your bitcoin cli commands to the script files: `01.sh to 09.sh` in the `submission` folder. Example:
+4. Add your bitcoin cli commands to the script files: `01.sh to 08.sh` in the `submission` folder. Example:
    ```sh
    $ bitcoin-cli -signet getblockcount
    ```
@@ -44,7 +44,7 @@ You can also check out [Bitcoin Core RPC API Reference docs](https://developer.b
 
 <img src="https://github.com/btrust-builders/lbcli-final-capstone-project/blob/main/success.png" width="1000" />
 
-7. For the final exercise, follow instructions in `FINAL-TASK.TXT` file and update all other `xxx.txt` files.
+7. For the final exercise, follow instructions in `FINAL-TASK.MD` file and update all other `xxx.txt` files.
 
 8. Submit your solution to this form: [Google form](https://forms.gle/eDRGAJXpLqRxEExR6).
 
