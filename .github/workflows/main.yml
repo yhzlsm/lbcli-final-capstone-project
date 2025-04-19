@@ -135,10 +135,92 @@ jobs:
           fi
 
           # Verify native SegWit address exists
+          if [ ! -s submission/address.txt ]; then
+              echo "❌ Error: address.txt is empty or missing."
+              exit 1
+          fi
+
           ADDRESS=$(cat submission/address.txt)
           if [[ $ADDRESS == "tb1"* ]]; then
             echo "✅ Native SegWit address is valid: $ADDRESS"
           else
             echo "❌ Invalid SegWit address: $ADDRESS"
+            exit 1
+          fi
+
+          # Verify transaction-1.txt (funding tx)
+          TXID=$(cat submission/transaction-1.txt)
+          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TXID &> /dev/null; then
+            echo "✅ Funding transaction exists: $TXID"
+          else
+            echo "❌ Funding transaction not found: $TXID"
+            exit 1
+          fi
+
+
+          # Verify block-1.txt and coinbase-1.txt
+          BLOCK=$(cat submission/block-1.txt)
+          COINBASE=$(cat submission/coinbase-1.txt)
+          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
+            echo "✅ Coinbase TX $COINBASE found in block $BLOCK"
+          else
+            echo "❌ Coinbase TX $COINBASE NOT found in block $BLOCK"
+            exit 1
+          fi
+
+
+          # Verify transaction-2.txt (spend tx)
+          TXID=$(cat submission/transaction-2.txt)
+          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TXID &> /dev/null; then
+            echo "✅ Spend transaction exists: $TXID"
+          else
+            echo "❌ Spend transaction not found: $TXID"
+            exit 1
+          fi
+          
+
+          # Verify block-2.txt and coinbase-2.txt
+          BLOCK=$(cat submission/block-2.txt)
+          COINBASE=$(cat submission/coinbase-2.txt)
+          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
+            echo "✅ Coinbase TX $COINBASE found in block $BLOCK"
+          else
+            echo "❌ Coinbase TX $COINBASE NOT found in block $BLOCK"
+            exit 1
+          fi
+
+
+          # Verify multisig address
+          ADDRESS=$(cat submission/multisig-address.txt)
+          if [[ $ADDRESS == "2"* ]]; then
+            echo "✅ Multisig address look valid."
+          else
+            echo "❌ Invalid multisig address"
+            exit 1
+          fi
+
+          # Verify multisig redeem script
+          REDEEM=$(cat submission/multisig-redeem.txt)
+          if [[ $REDEEM =~ ^[0-9a-fA-F]+$ ]]; then
+            echo "✅ Multisig redeem script look valid."
+          else
+            echo "❌ Invalid multisig redeem script"
+            exit 1
+          fi
+
+          # Verify multisig transaction and block
+          TXID=$(cat submission/multisig-transaction.txt)
+          BLOCK=$(cat submission/multisig-block.txt)
+          COINBASE=$(cat submission/multisig-coinbase.txt)
+          if bitcoin-cli -signet getrawtransaction $TXID &> /dev/null; then
+            echo "✅ Multisig funding transaction exists: $TXID"
+          else
+            echo "❌ Multisig funding transaction not found"
+            exit 1
+          fi
+          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
+            echo "✅ Multisig coinbase TX $COINBASE found in block $BLOCK"
+          else
+            echo "❌ Multisig coinbase TX $COINBASE not found in block $BLOCK"
             exit 1
           fi
