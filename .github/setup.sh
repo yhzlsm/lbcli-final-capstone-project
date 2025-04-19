@@ -5,4 +5,4 @@ mkdir -p ~/.bitcoin
 echo "rpcconnect=165.22.121.70" >> ~/.bitcoin/bitcoin.conf
 echo "rpcuser=btrustbuildersrpc" >> ~/.bitcoin/bitcoin.conf
 echo "rpcpassword=btrustbuilderspass" >> ~/.bitcoin/bitcoin.conf
-echo $(bitcoin-cli --version)
+echo $(bitcoin-cli getblockchaininfo)
