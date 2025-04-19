@@ -113,4 +113,32 @@ jobs:
             echo "❌ Error: TX Block Height verification failed!"
             exit 1
           fi
+
+
+          ## FINAL TASK
+
+          # Read wallet name and verify GitHub profile
+          if [ ! -s submission/wallet.txt ]; then
+              echo "❌ Error: wallet.txt is empty or missing."
+              exit 1
+          fi
+
+          WALLET=$(cat submission/wallet.txt | tr -d '\n')
+          echo "wallet=$WALLET" >> $GITHUB_OUTPUT
       
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://github.com/$WALLET)
+          if [[ "$STATUS_CODE" == "200" ]]; then
+            echo "✅ GitHub profile exists: https://github.com/$WALLET"
+          else
+            echo "❌ GitHub profile not found for wallet name '$WALLET'"
+            exit 1
+          fi
+
+          # Verify native SegWit address exists
+          ADDRESS=$(cat submission/address.txt)
+          if [[ $ADDRESS == "tb1"* ]]; then
+            echo "✅ Native SegWit address is valid: $ADDRESS"
+          else
+            echo "❌ Invalid SegWit address: $ADDRESS"
+            exit 1
+          fi
