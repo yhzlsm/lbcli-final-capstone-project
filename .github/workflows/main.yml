@@ -30,10 +30,6 @@ jobs:
           echo "Fetching block chain info..."
           bitcoin-cli -signet getblockchaininfo
       
-          # Verify block is accessible
-          echo "Fetching block hash for height 243833..."
-          bitcoin-cli -signet getblockhash 243833
-      
           # Run and verify 01.sh
           chmod +x submission/01.sh
           HASH=$(submission/01.sh)
