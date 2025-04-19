@@ -161,7 +161,6 @@ jobs:
             exit 1
           fi
 
-
           # Verify block-1.txt
           if [[ ! -s submission/block-1.txt ]]; then
               echo "❌ Error: block-1.txt is empty or missing."
@@ -176,39 +175,89 @@ jobs:
               exit 1
           fi
 
-          # Verify block-1.txt and coinbase-1.txt
-          BLOCK=$(cat submission/block-1.txt)
-          COINBASE=$(cat submission/coinbase-1.txt)
-          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
-            echo "✅ Coinbase TX $COINBASE found in block $BLOCK"
+          # Verify coinbase-1.txt
+          if [[ ! -s submission/coinbase-1.txt ]]; then
+              echo "❌ Error: coinbase-1.txt is empty or missing."
+              exit 1
+          fi
+          COINBASE1=$(cat submission/coinbase-1.txt)
+          EXP=$(bitcoin-cli -signet getblock $BLOCK1 | jq -r '.tx[0]')
+          if echo "$EXP" | grep -xq "$COINBASE1"; then
+            echo "✅ Coinbase-1 matches the first transaction in block-1"
           else
-            echo "❌ Coinbase TX $COINBASE NOT found in block $BLOCK"
+            echo "❌ Coinbase-1 does not match"
             exit 1
           fi
-
 
           # Verify transaction-2.txt (spend tx)
-          TXID=$(cat submission/transaction-2.txt)
-          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TXID &> /dev/null; then
-            echo "✅ Spend transaction exists: $TXID"
-          else
-            echo "❌ Spend transaction not found: $TXID"
-            exit 1
+          if [[ ! -s submission/transaction-2.txt ]]; then
+              echo "❌ Error: transaction-2.txt is empty or missing."
+              exit 1
           fi
-          
-
-          # Verify block-2.txt and coinbase-2.txt
-          BLOCK=$(cat submission/block-2.txt)
-          COINBASE=$(cat submission/coinbase-2.txt)
-          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
-            echo "✅ Coinbase TX $COINBASE found in block $BLOCK"
+          TX2=$(cat submission/transaction-2.txt)
+          TX2_DETAILS=$(bitcoin-cli -signet getrawtransaction $TX2 true)
+          AMOUNT_SENT=$(echo $TX2_DETAILS | jq -r ".vout[] | select(.scriptPubKey.address==\"tb1qddpcyus3u603n63lk7m5epjllgexc24vj5ltp7\") | .value")
+          if [[ "$AMOUNT_SENT" == "0.00010000" ]]; then
+              echo "✅ Sent exactly 10,000 sats."
           else
-            echo "❌ Coinbase TX $COINBASE NOT found in block $BLOCK"
+              echo "❌ Did not send exactly 10,000 sats."
+              exit 1
+          fi
+
+          # Verify fee
+          TX2_META=$(bitcoin-cli -signet -rpcwallet=$WALLET gettransaction $TX2)
+          FEE=$(echo $TX2_META | jq -r '.fee' | awk '{print int(-100000000 * $1)}')
+          if [[ "$FEE" -eq 700 ]]; then
+              echo "✅ Fee is exactly 700 sats."
+          else
+              echo "❌ Incorrect fee: $FEE sats."
+              exit 1
+          fi
+
+          # Verify Transaction fee can be upgraded
+          HEX=$(echo $TX2_META | jq -r '.hex')
+          SE=$(bitcoin-cli -signet decoderawtransaction $HEX | jq -r '.vin[0].sequence')
+          if [[ -n "$SE" && "$SE" =~ ^[0-9]+$ && "$SE" -lt 4294967294 ]]; then
+              echo "✅ Transaction is BIP125 replaceable."
+          else
+              echo "❌ Transaction is not BIP125 replaceable."
+              exit 1
+          fi
+
+          # Verify block-2.txt
+          if [[ ! -s submission/block-2.txt ]]; then
+              echo "❌ Error: block-2.txt is empty or missing."
+              exit 1
+          fi
+          BLOCK2=$(cat submission/block-2.txt | tr -d '\n')
+          TXS2=$(bitcoin-cli -signet getblock $BLOCK2 | jq -r '.tx[]')
+          if echo "$TXS2" | grep -xq "$TX2"; then
+              echo "✅ transaction-2 is included in block-2."
+          else
+              echo "❌ transaction-2 not found in block-2."
+              exit 1
+          fi
+
+          # Verify coinbase-2.txt
+          if [[ ! -s submission/coinbase-2.txt ]]; then
+              echo "❌ Error: coinbase-2.txt is empty or missing."
+              exit 1
+          fi
+          COINBASE2=$(cat submission/coinbase-2.txt)
+          EXP2=$(bitcoin-cli -signet getblock $BLOCK2 | jq -r '.tx[0]')
+          if echo "$EXP2" | grep -xq "$COINBASE2"; then
+            echo "✅ Coinbase-2 matches the first transaction in block-2"
+          else
+            echo "❌ Coinbase-2 does not match"
             exit 1
           fi
 
 
           # Verify multisig address
+          if [[ ! -s submission/multisig-address.txt ]]; then
+              echo "❌ Error: multisig-address.txt is empty or missing."
+              exit 1
+          fi
           ADDRESS=$(cat submission/multisig-address.txt)
           if [[ $ADDRESS == "2"* ]]; then
             echo "✅ Multisig address look valid."
@@ -218,6 +267,10 @@ jobs:
           fi
 
           # Verify multisig redeem script
+          if [[ ! -s submission/multisig-redeem.txt ]]; then
+              echo "❌ Error: multisig-redeem.txt is empty or missing."
+              exit 1
+          fi
           REDEEM=$(cat submission/multisig-redeem.txt)
           if [[ $REDEEM =~ ^[0-9a-fA-F]+$ ]]; then
             echo "✅ Multisig redeem script look valid."
@@ -226,19 +279,44 @@ jobs:
             exit 1
           fi
 
-          # Verify multisig transaction and block
-          TXID=$(cat submission/multisig-transaction.txt)
-          BLOCK=$(cat submission/multisig-block.txt)
-          COINBASE=$(cat submission/multisig-coinbase.txt)
-          if bitcoin-cli -signet getrawtransaction $TXID &> /dev/null; then
-            echo "✅ Multisig funding transaction exists: $TXID"
-          else
-            echo "❌ Multisig funding transaction not found"
-            exit 1
+          # Verify multisig transaction
+          if [[ ! -s submission/multisig-transaction.txt ]]; then
+              echo "❌ Error: multisig-transaction.txt is empty or missing."
+              exit 1
           fi
-          if bitcoin-cli -signet getblock $BLOCK | grep -q "$COINBASE"; then
-            echo "✅ Multisig coinbase TX $COINBASE found in block $BLOCK"
+          MU_TXID=$(cat submission/multisig-transaction.txt)
+          R=$(bitcoin-cli -signet getrawtransaction "$MU_TXID" true | jq --arg addr "$ADDRESS" '.vout[] | select(.scriptPubKey.address == $addr)')
+          if [[ -n "$R" ]]; then
+              echo "✅ Multisig Funding transaction exists: $MU_TXID"
           else
-            echo "❌ Multisig coinbase TX $COINBASE not found in block $BLOCK"
+              echo "❌ Multisig Funding transaction not found: $MU_TXID"
+              exit 1
+          fi
+
+          # Verify multisig-block.txt
+          if [[ ! -s submission/multisig-block.txt ]]; then
+              echo "❌ Error: bmultisig-block.txt is empty or missing."
+              exit 1
+          fi
+          MU_BLOCK=$(cat submission/multisig-block.txt | tr -d '\n')
+          MU_TXS=$(bitcoin-cli -signet getblock $MU_BLOCK | jq -r '.tx[]')
+          if echo "$MU_TXS" | grep -xq "$MU_TXID"; then
+              echo "✅ multisig transaction is included in multisig block."
+          else
+              echo "❌ multisig transaction not found in multisig block."
+              exit 1
+          fi
+
+          # Verify multisig-coinbase.txt
+          if [[ ! -s submission/multisig-coinbase.txt ]]; then
+              echo "❌ Error: multisig-coinbase.txt is empty or missing."
+              exit 1
+          fi
+          MU_COINBASE=$(cat submission/multisig-coinbase.txt)
+          FIRST=$(bitcoin-cli -signet getblock $MU_BLOCK | jq -r '.tx[0]')
+          if echo "$FIRST" | grep -xq "$MU_COINBASE"; then
+            echo "✅ multisig-coinbase matches the first transaction."
+          else
+            echo "❌ multisig-coinbase does not match."
             exit 1
           fi
