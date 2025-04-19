@@ -83,13 +83,13 @@ jobs:
             exit 1
           fi
       
-          # 06.sh - Verify TX Fee (again)
+          # 06.sh - Verify TX ID opt-in RBF
           chmod +x submission/06.sh
-          FEE=$(submission/06.sh)
-          if [[ "$FEE" == "696" ]]; then
-            echo "✅ Success: TX Fee (06.sh) verification passed!"
+          TXID=$(submission/06.sh)
+          if [[ "$TXID" == "d78ef223c1adb9e5c9051f0ab1f03708838466630805aaf3eb2b123e374d12ab" ]]; then
+            echo "✅ Success: TX ID opt-in RBF verification passed!"
           else
-            echo "❌ Error: TX Fee (06.sh) verification failed!"
+            echo "❌ Error: TX ID opt-in RBF verification failed!"
             exit 1
           fi
       
