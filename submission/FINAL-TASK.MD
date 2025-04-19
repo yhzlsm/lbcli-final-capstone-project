@@ -4,7 +4,7 @@ See `README.md` file on how to send bitcoin cli commands to the Signet network
 For the final task you will first create a bitcoin wallet using your github username as wallet name
 After successful creation, add your wallet name to the `wallet.txt` file
 
-Hence, you should add your wallet name to subsquent commands, for example 
+Hence, you should add your wallet name to subsequent commands, for example 
 `bitcoin-cli -signet -rpcwallet=github-username getblockcount`
 
 You dont need to add your bitcoin-cli commands in this file.
@@ -14,6 +14,8 @@ The goal is to update the `xxx.txt` files with the address, transaction and bloc
 
 1. Create a bitcoin wallet using your github username as wallet name
     - Add your wallet name to the `wallet.txt` file
+
+### PS: Add `-rpcwallet=github-username` flag for subsequent commands below
 
 2. Create a native SegWit address
     - Add your address to the `address.txt` file
