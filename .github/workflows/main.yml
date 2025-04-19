@@ -20,7 +20,7 @@ jobs:
 
           # Verify block is accessible
           echo "Fetching block chain info..."
-          bitcoin-cli getblockchaininfo
+          bitcoin-cli -signet getblockchaininfo
       
           # Verify block is accessible
           echo "Fetching block hash for height 243833..."
