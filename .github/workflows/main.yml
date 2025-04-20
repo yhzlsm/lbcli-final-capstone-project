@@ -95,7 +95,7 @@ jobs:
       
           # 07.sh - Verify Coinbase TX
           chmod +x submission/07.sh
-          COINBASE=$(submission/07.sh)
+          COINBASE=$(submission/07.sh | tr -d '\n' | xargs)
           EXPECTED_OUTPUT=7ab200e41b53d974f757535c01a715aae6b1322a30753c1d2b0ea201500bc060
           if [[ "$COINBASE" == "$EXPECTED_OUTPUT" ]]; then
             echo "✅ Success: Coinbase TX verification passed!"
@@ -154,11 +154,12 @@ jobs:
               exit 1
           fi
           TX1=$(cat submission/transaction-1.txt)
-          if bitcoin-cli -signet -rpcwallet=$WALLET getrawtransaction $TX1 &> /dev/null; then
-            echo "✅ Funding transaction exists: $TX1"
+          EX=$(bitcoin-cli -signet getrawtransaction "$TX1" true | jq --arg addr "$ADDRESS" '.vout[] | select(.scriptPubKey.address == $addr)')
+          if [[ -n "$EX" ]]; then
+              echo "✅ Funding transaction exists: $TX1"
           else
-            echo "❌ Funding transaction not found: $TX1"
-            exit 1
+              echo "❌ Funding transaction not found: $TX1"
+              exit 1
           fi
 
           # Verify block-1.txt
