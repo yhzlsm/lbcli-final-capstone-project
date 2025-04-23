@@ -2,7 +2,7 @@
 block_hash=$(bitcoin-cli -signet getblockhash "243833")
 block=$(bitcoin-cli -signet getblock "$block_hash" 2)
 transactions=$(echo $block | jq '.tx')
-vouts=$(echo $transactions | jq '.[].vout')
+vouts=$(echo $transactions | jq '.[].vin')
 count=0
 for i in $vouts
 do
